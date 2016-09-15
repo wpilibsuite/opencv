@@ -15,24 +15,26 @@ targetCompatibility = 1.6
 
 def date = new Date()
 def formattedDate = date.format('yyMMdd')
-version = "3.1.0-${formattedDate}"
+version = "3.1.0"
 
 def cmakeBuildDirectory = Paths.get(projectDir.canonicalPath, "build")
 def jarName = "${project.name}-${version.replace(".", "").replace("-" + formattedDate, "")}.jar"
 def pathToOpenCVJar = cmakeBuildDirectory.resolve("bin").resolve(jarName)
 
 def osName = ""
+def os_name = System.getProperty("os.name")
+def os_arch = System.getProperty("os.arch")
 
 if(OperatingSystem.current().isWindows()){
-    osName = "win64"
+    osName = "windows-${os_arch}"
 }
 
 if(OperatingSystem.current().isLinux()){
-    osName = "linux64"
+    osName = "linux-${os_arch}"
 }
 
 if(OperatingSystem.current().isMacOsX()){
-    osName = "osx"
+    osName = "osx-${os_arch}"
 }
 
 repositories {
@@ -83,13 +85,14 @@ task make(type: Exec, dependsOn: cmake) {
     outputs.file cmakeBuildDirectory.resolve("src").toFile()
 }
 
-task openCVPlatformJar(type: Jar, dependsOn: make) {
-    baseName = "${project.name}-java-natives-${osName}"
+task openCVJniJar(type: Jar, dependsOn: make) {
+    baseName = "${project.name}-jni"
+    classifier = "${osName}"
 
     manifest {
         attributes(
                 "Created-By": "IHMC Gradle Build Script",
-                "Implementation-Title": "OpenCV Native Library, ${osName}",
+                "Implementation-Title": "OpenCV JNI Library, ${osName}",
                 "Implementation-Version": project.version,
                 "Implementation-Vendor": "Itseez",
 
@@ -114,7 +117,39 @@ task openCVPlatformJar(type: Jar, dependsOn: make) {
     }
 }
 
+task openCVNativeLibJar(type: Jar, dependsOn: make) {
+    baseName = "${project.name}-natives"
+    classifier = "${osName}"
+    manifest {
+        attributes(
+                "Created-By": "IHMC Gradle Build Script",
+                "Implementation-Title": "OpenCV Native Libraries, ${osName}",
+                "Implementation-Version": project.version,
+                "Implementation-Vendor": "Itseez",
+
+                "Bundle-Name": "${baseName}",
+                "Bundle-Version": project.version,
+                "Bundle-License": "https://opensource.org/licenses/BSD-3-Clause",
+                "Bundle-Vendor": "IHMC")
+    }
+
+    if(!OperatingSystem.current().isWindows()){
+      from(cmakeBuildDirectory.resolve("lib").toFile()) {
+          exclude '*java*.so'
+          exclude '*java*.dylib'
+          into 'org/opencv'
+      }
+    }
+    else {
+      from(cmakeBuildDirectory.resolve("bin").resolve("Release").toFile()) {
+          exclude '*java*.dll'
+          into 'org/opencv'
+      }
+    }
+}
+
 task openCVJar(type: Jar, dependsOn: make) {
+    baseName = "${project.name}-java"
     manifest {
         attributes(
                 "Created-By": "IHMC Gradle Build Script",
@@ -135,7 +170,7 @@ task openCVJar(type: Jar, dependsOn: make) {
 }
 
 task openCVSourceJar(type: Jar, dependsOn: make) {
-    classifier = "sources"
+    baseName = "${project.name}-sources"
     manifest {
         attributes(
                 "Created-By": "IHMC Gradle Build Script",
