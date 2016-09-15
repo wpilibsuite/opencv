@@ -6,11 +6,11 @@
     <!-- This is to make a jar with a source attachment, for e.g. easy -->
     <!-- navigation in Eclipse. See this question: -->
     <!-- http://stackoverflow.com/questions/3584968/ant-how-to-compile-jar-that-includes-source-attachment -->
-    <javac sourcepath="" srcdir="src" destdir="src" debug="on" includeantruntime="false" >
-      <include name="**/*.java"/>
+    <mkdir dir="classes" />
+    <javac source="1.6" target="1.6" sourcepath="" srcdir="src" destdir="classes" includeantruntime="false" >
       <compilerarg line="-encoding utf-8"/>
     </javac>
 
-    <jar basedir="src" destfile="bin/@JAR_NAME@"/>
+    <jar basedir="classes" destfile="bin/@JAR_NAME@"/>
   </target>
 </project>

@@ -23,3 +23,7 @@ CMakeCache.txt
 *.log
 *.tlog
 build
+*.iml
+.idea/
+.gradle/
+gradleDir/
