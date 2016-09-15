@@ -42,6 +42,8 @@ if(OperatingSystem.current().isWindows()){
     osName = "${os_name}-${os_arch}"
 }
 
+println "Normalized OS name: ${osName}"
+
 repositories {
   mavenLocal()
   jcenter()
@@ -142,6 +144,7 @@ task openCVNativeLibJar(type: Jar, dependsOn: make) {
       from(cmakeBuildDirectory.resolve("lib").toFile()) {
           exclude '*java*.so'
           exclude '*java*.dylib'
+          exclude '**/*dephelp*'
           into 'org/opencv'
       }
     }
@@ -221,7 +224,6 @@ task allArtifacts(type: GradleBuild) {
 }
 
 publishing {
-    println configurations.runtime.allDependencies
     publications {
         mavenOpenCV(MavenPublication) {
             groupId 'us.ihmc.thirdparty.org.opencv'
