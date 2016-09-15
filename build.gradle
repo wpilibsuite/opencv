@@ -203,23 +203,13 @@ publishing {
                 def licenseNode = asNode().appendNode('licenses').appendNode('license')
                 licenseNode.appendNode('name', 'BSD 3-Clause License')
                 licenseNode.appendNode('url', 'https://opensource.org/licenses/BSD-3-Clause')
-
-                def depsNode = asNode().appendNode('dependencies')
-
-                ['win64', 'linux64', 'osx'].each{ dep ->
-                    def newDependencyNode = depsNode.appendNode('dependency')
-                    newDependencyNode.appendNode('groupId', 'us.ihmc.thirdparty.org.opencv')
-                    newDependencyNode.appendNode('artifactId', "${project.name}-java-natives-${dep}")
-                    newDependencyNode.appendNode('version', project.version)
-                    newDependencyNode.appendNode('scope', 'runtime')
-                }
             }
         }
 
-        mavenOpenCVPlatformJar(MavenPublication) {
+        mavenOpenCVJniJar(MavenPublication) {
             groupId 'us.ihmc.thirdparty.org.opencv'
-            artifactId "${project.name}-java-natives-${osName}"
-            artifact openCVPlatformJar
+            artifactId "${project.name}-jni"
+            artifact openCVJniJar
 
             pom.withXml {
                 def licenseNode = asNode().appendNode('licenses').appendNode('license')
@@ -251,7 +241,7 @@ bintray {
     }
     else if(project.bintrayPublishType.equals("PLATFORM"))
     {
-        publications = ["mavenOpenCVPlatformJar"]
+        publications = ["mavenOpenCVJniJar"]
     }
     else
     {
