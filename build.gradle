@@ -25,16 +25,20 @@ def osName = ""
 def os_name = System.getProperty("os.name")
 def os_arch = System.getProperty("os.arch")
 
+if (os_arch == 'amd64') {
+    os_arch = 'x86_64'
+} else if (os_arch == 'i386') {
+    os_arch = 'x86'
+}
+
 if(OperatingSystem.current().isWindows()){
     osName = "windows-${os_arch}"
-}
-
-if(OperatingSystem.current().isLinux()){
+} else if(OperatingSystem.current().isLinux()){
     osName = "linux-${os_arch}"
-}
-
-if(OperatingSystem.current().isMacOsX()){
+} else if(OperatingSystem.current().isMacOsX()){
     osName = "osx-${os_arch}"
+} else {
+    osName = "${os_name}-${os_arch}"
 }
 
 repositories {
@@ -57,12 +61,12 @@ task cmake(type: Exec) {
     if(OperatingSystem.current().isWindows())
     {
         executable 'cmd'
-        args = ['/c', 'cmake', '-DBUILD_SHARED_LIBS=OFF', '-D WITH_CUDA=OFF', '-D WITH_FFMPEG=OFF', '-D WITH_OPENEXR=OFF', '-G', '"Visual Studio 14 2015 Win64"', '..']
+        args = ['/c', 'cmake', '-DBUILD_SHARED_LIBS=OFF', '-D WITH_CUDA=OFF', '-D WITH_IPP=OFF', '-D WITH_OPENCL=OFF', '-D WITH_FFMPEG=OFF', '-D WITH_OPENEXR=OFF', '-G', '"Visual Studio 14 2015 Win64"', '..']
     }
     else
     {
         executable 'cmake'
-        args = ['-DBUILD_SHARED_LIBS=OFF', '-D WITH_CUDA=OFF', '-D WITH_FFMPEG=OFF', '-D WITH_OPENEXR=OFF', '..']
+        args = ['-DBUILD_SHARED_LIBS=OFF', '-D WITH_CUDA=OFF', '-D WITH_IPP=OFF', '-D WITH_OPENCL=OFF', '-D WITH_FFMPEG=OFF', '-D WITH_OPENEXR=OFF', '..']
     }
 }
 
