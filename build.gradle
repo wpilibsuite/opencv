@@ -216,6 +216,10 @@ task openCVHeadersJar(type: Jar, dependsOn: make) {
     }
 }
 
+task allArtifacts(type: GradleBuild) {
+    tasks = ['openCVJar', 'openCVSourceJar', 'openCVJniJar', 'openCVNativeLibJar', 'openCVHeadersJar']
+}
+
 publishing {
     println configurations.runtime.allDependencies
     publications {
