@@ -17,7 +17,8 @@ def date = new Date()
 def formattedDate = date.format('yyMMdd')
 version = "3.1.0"
 
-def cmakeBuildDirectory = Paths.get(projectDir.canonicalPath, "build")
+def rootPath = Paths.get(projectDir.canonicalPath)
+def cmakeBuildDirectory = rootPath.resolve('build')
 def jarName = "${project.name}-${version.replace(".", "").replace("-" + formattedDate, "")}.jar"
 def pathToOpenCVJar = cmakeBuildDirectory.resolve("bin").resolve(jarName)
 
@@ -95,7 +96,7 @@ task openCVJniJar(type: Jar, dependsOn: make) {
 
     manifest {
         attributes(
-                "Created-By": "IHMC Gradle Build Script",
+                "Created-By": "WPILib Gradle Build Script",
                 "Implementation-Title": "OpenCV JNI Library, ${osName}",
                 "Implementation-Version": project.version,
                 "Implementation-Vendor": "Itseez",
@@ -103,7 +104,7 @@ task openCVJniJar(type: Jar, dependsOn: make) {
                 "Bundle-Name": "${baseName}",
                 "Bundle-Version": project.version,
                 "Bundle-License": "https://opensource.org/licenses/BSD-3-Clause",
-                "Bundle-Vendor": "IHMC")
+                "Bundle-Vendor": "WPILib")
     }
 
     if(!OperatingSystem.current().isWindows()){
@@ -126,7 +127,7 @@ task openCVNativeLibJar(type: Jar, dependsOn: make) {
     classifier = "${osName}"
     manifest {
         attributes(
-                "Created-By": "IHMC Gradle Build Script",
+                "Created-By": "WPILib Gradle Build Script",
                 "Implementation-Title": "OpenCV Native Libraries, ${osName}",
                 "Implementation-Version": project.version,
                 "Implementation-Vendor": "Itseez",
@@ -134,7 +135,7 @@ task openCVNativeLibJar(type: Jar, dependsOn: make) {
                 "Bundle-Name": "${baseName}",
                 "Bundle-Version": project.version,
                 "Bundle-License": "https://opensource.org/licenses/BSD-3-Clause",
-                "Bundle-Vendor": "IHMC")
+                "Bundle-Vendor": "WPILib")
     }
 
     if(!OperatingSystem.current().isWindows()){
@@ -156,7 +157,7 @@ task openCVJar(type: Jar, dependsOn: make) {
     baseName = "${project.name}-java"
     manifest {
         attributes(
-                "Created-By": "IHMC Gradle Build Script",
+                "Created-By": "WPILib Gradle Build Script",
                 "Implementation-Title": "OpenCV",
                 "Implementation-Version": project.version,
                 "Implementation-Vendor": "Itseez",
@@ -164,7 +165,7 @@ task openCVJar(type: Jar, dependsOn: make) {
                 "Bundle-Name": project.name,
                 "Bundle-Version": project.version,
                 "Bundle-License": "https://opensource.org/licenses/BSD-3-Clause",
-                "Bundle-Vendor": "IHMC")
+                "Bundle-Vendor": "WPILib")
     }
 
     from { zipTree(pathToOpenCVJar.toFile()) } {
@@ -177,7 +178,7 @@ task openCVSourceJar(type: Jar, dependsOn: make) {
     baseName = "${project.name}-sources"
     manifest {
         attributes(
-                "Created-By": "IHMC Gradle Build Script",
+                "Created-By": "WPILib Gradle Build Script",
                 "Implementation-Title": "OpenCV Java Sources",
                 "Implementation-Version": project.version,
                 "Implementation-Vendor": "Itseez",
@@ -185,11 +186,33 @@ task openCVSourceJar(type: Jar, dependsOn: make) {
                 "Bundle-Name": "${project.name}-sources",
                 "Bundle-Version": project.version,
                 "Bundle-License": "https://opensource.org/licenses/BSD-3-Clause",
-                "Bundle-Vendor": "IHMC")
+                "Bundle-Vendor": "WPILib")
     }
 
     from(cmakeBuildDirectory.resolve("src").toFile()) {
         include '**/*.java'
+    }
+}
+
+task openCVHeadersJar(type: Jar, dependsOn: make) {
+    baseName = "${project.name}-headers"
+    manifest {
+        attributes(
+                "Created-By": "WPILib Gradle Build Script",
+                "Implementation-Title": "OpenCV C++ Headers",
+                "Implementation-Version": project.version,
+                "Implementation-Vendor": "Itseez",
+
+                "Bundle-Name": "${project.name}-headers",
+                "Bundle-Version": project.version,
+                "Bundle-License": "https://opensource.org/licenses/BSD-3-Clause",
+                "Bundle-Vendor": "WPILib")
+    }
+    from(rootPath.resolve('modules').toFile()) {
+        include '*/include/**/*.hpp'
+        include '*/include/**/*.h'
+        exclude 'java/**'
+        exclude 'python/**'
     }
 }
 
