@@ -61,12 +61,12 @@ task cmake(type: Exec) {
     if(OperatingSystem.current().isWindows())
     {
         executable 'cmd'
-        args = ['/c', 'cmake', '-DBUILD_SHARED_LIBS=OFF', '-D WITH_CUDA=OFF', '-D WITH_IPP=OFF', '-D WITH_OPENCL=OFF', '-D WITH_FFMPEG=OFF', '-D WITH_OPENEXR=OFF', '-G', '"Visual Studio 14 2015 Win64"', '..']
+        args = ['/c', 'cmake', '-DBUILD_SHARED_LIBS=OFF', '-DWITH_CUDA=OFF', '-DWITH_IPP=OFF', '-DWITH_OPENCL=OFF', '-DWITH_FFMPEG=OFF', '-DWITH_OPENEXR=OFF', '-G', '"Visual Studio 14 2015 Win64"', '..']
     }
     else
     {
         executable 'cmake'
-        args = ['-DBUILD_SHARED_LIBS=OFF', '-D WITH_CUDA=OFF', '-D WITH_IPP=OFF', '-D WITH_OPENCL=OFF', '-D WITH_FFMPEG=OFF', '-D WITH_OPENEXR=OFF', '..']
+        args = ['-DBUILD_SHARED_LIBS=OFF', '-DWITH_CUDA=OFF', '-DWITH_IPP=OFF', '-DWITH_OPENCL=OFF', '-DWITH_FFMPEG=OFF', '-DWITH_OPENEXR=OFF', '..']
     }
 }
 
