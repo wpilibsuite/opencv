@@ -153,8 +153,10 @@ task openCVNativeLibJar(type: Jar, dependsOn: make) {
       }
     }
     else {
-      from(cmakeBuildDirectory.resolve("bin").resolve("Release").toFile()) {
-          exclude '*java*.dll'
+      from(cmakeBuildDirectory.resolve("lib").resolve("Release").toFile()) {
+          include '*.lib' // static lib
+          include '*.dll' // dynamic lib
+          exlude '*java*'
           into 'org/opencv'
       }
     }
