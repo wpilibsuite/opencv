@@ -44,13 +44,17 @@ if(OperatingSystem.current().isWindows()){
 
 println "Normalized OS name: ${osName}"
 
+// Determine what repo to publish to. Default is development. Valid options are development, beta, stable, and release
+if (!hasProperty('repo')) {
+    allprojects {
+        ext.repo = 'development'
+    }
+}
+
 repositories {
   mavenLocal()
   jcenter()
   mavenCentral()
-  maven {
-    url  "http://dl.bintray.com/ihmcrobotics/maven-release"
-  }
 }
 
 task cmake(type: Exec) {
@@ -225,12 +229,13 @@ task allArtifacts(type: GradleBuild) {
 
 publishing {
     publications {
-        mavenOpenCV(MavenPublication) {
-            groupId 'us.ihmc.thirdparty.org.opencv'
-
+        java(MavenPublication) {
+            groupId 'org.opencv'
+            artifactId "${project.name}-java"
             artifact openCVJar
-
-            artifact openCVSourceJar
+            artifact openCVSourceJar {
+                classifier 'sources'
+            }
 
             pom.withXml {
                 def licenseNode = asNode().appendNode('licenses').appendNode('license')
@@ -238,9 +243,8 @@ publishing {
                 licenseNode.appendNode('url', 'https://opensource.org/licenses/BSD-3-Clause')
             }
         }
-
-        mavenOpenCVJniJar(MavenPublication) {
-            groupId 'us.ihmc.thirdparty.org.opencv'
+        jni(MavenPublication) {
+            groupId 'org.opencv'
             artifactId "${project.name}-jni"
             artifact openCVJniJar
 
@@ -250,53 +254,32 @@ publishing {
                 licenseNode.appendNode('url', 'https://opensource.org/licenses/BSD-3-Clause')
             }
         }
+        headers(MavenPublication) {
+            groupId 'org.opencv'
+            artifactId "${project.name}-headers"
+            artifact openCVHeadersJar
+
+            pom.withXml {
+                def licenseNode = asNode().appendNode('licenses').appendNode('license')
+                licenseNode.appendNode('name', 'BSD 3-Clause License')
+                licenseNode.appendNode('url', 'https://opensource.org/licenses/BSD-3-Clause')
+            }
+        }
+        natives(MavenPublication) {
+            groupId 'org.opencv'
+            artifactId "${project.name}-natives"
+            artifact openCVNativeLibJar
+
+            pom.withXml {
+                def licenseNode = asNode().appendNode('licenses').appendNode('license')
+                licenseNode.appendNode('name', 'BSD 3-Clause License')
+                licenseNode.appendNode('url', 'https://opensource.org/licenses/BSD-3-Clause')
+            }
+        }
     }
-}
-
-bintray {
-    user = project.hasProperty("bintray_user") ? project.bintray_user : "invalid"
-    key = project.hasProperty("bintray_key") ? project.bintray_key : "invalid"
-
-    if (user.equals("invalid")) {
-        project.logger.debug("Bintray user name property not set. Please set the 'bintray_user' property in ~/.gradle/gradle.properties. See https://github.com/bintray/gradle-bintray-plugin")
-    }
-
-    if (key.equals("invalid")) {
-        project.logger.debug("Bintray API key property not set. Please set the 'bintray_key' property in ~/.gradle/gradle.properties. See https://github.com/bintray/gradle-bintray-plugin")
-    }
-
-    dryRun = false
-    publish = false
-
-    if(project.bintrayPublishType.equals("WRAPPER"))
-    {
-        publications = ["mavenOpenCV"]
-    }
-    else if(project.bintrayPublishType.equals("PLATFORM"))
-    {
-        publications = ["mavenOpenCVJniJar"]
-    }
-    else
-    {
-        throw new GradleException("Invalid Bintray publication type: ${project.bintrayPublishType}, must be WRAPPER for the Java upload or PLATFORM for the native library upload")
-    }
-
-    pkg {
-        repo = "maven-vendor"
-        userOrg = "ihmcrobotics"
-        name = "OpenCVJavaBindings"
-        desc = "Maven repository providing the stock OpenCV Java bindings, vendored by IHMC Robotics"
-
-        websiteUrl = "http://opencv.org"
-        issueTrackerUrl = "https://github.com/itseez/opencv/issues"
-        vcsUrl = "https://github.com/itseez/opencv.git"
-
-        licenses = ['BSD 3-Clause']
-        labels = ['java', 'vision', 'opencv', 'jni', 'vendored']
-
-        version {
-            name = project.version
-            released = new Date()
+    repositories {
+        maven {
+            url "${System.getProperty('user.home')}/releases/maven/${project.repo}"
         }
     }
 }
