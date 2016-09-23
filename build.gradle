@@ -117,13 +117,11 @@ task openCVJniJar(type: Jar, dependsOn: make) {
       from(cmakeBuildDirectory.resolve("lib").toFile()) {
           include '*java*.so'
           include '*java*.dylib'
-          into 'org/opencv'
       }
     }
     else {
       from(cmakeBuildDirectory.resolve("bin").resolve("Release").toFile()) {
           include '*java*.dll'
-          into 'org/opencv'
       }
     }
 }
@@ -149,7 +147,6 @@ task openCVNativeLibJar(type: Jar, dependsOn: make) {
           exclude '*java*.so'
           exclude '*java*.dylib'
           exclude '**/*dephelp*'
-          into 'org/opencv'
       }
     }
     else {
@@ -157,7 +154,6 @@ task openCVNativeLibJar(type: Jar, dependsOn: make) {
           include '*.lib' // static lib
           include '*.dll' // dynamic lib
           exclude '*java*'
-          into 'org/opencv'
       }
     }
 }
