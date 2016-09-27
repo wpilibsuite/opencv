@@ -68,12 +68,12 @@ task cmake(type: Exec) {
     if(OperatingSystem.current().isWindows())
     {
         executable 'cmd'
-        args = ['/c', 'cmake', '-DBUILD_SHARED_LIBS=OFF', '-DWITH_CUDA=OFF','-DWITH_IPP=OFF', '-DWITH_OPENCL=OFF', '-DWITH_FFMPEG=OFF', '-DWITH_OPENEXR=OFF', '-DBUILD_TESTS=OFF',  '-G', '"Visual Studio 12 2013 Win64"', '..']
+        args = ['/c', 'cmake', '-DBUILD_SHARED_LIBS=OFF', '-DWITH_CUDA=OFF','-DWITH_IPP=OFF', '-DWITH_OPENCL=OFF', '-DWITH_FFMPEG=OFF', '-DWITH_OPENEXR=OFF', '-DBUILD_TESTS=OFF', '-DWITH_WEBP=OFF',  '-G', '"Visual Studio 12 2013 Win64"', '..']
     }
     else
     {
         executable 'cmake'
-        args = ['-DBUILD_SHARED_LIBS=OFF', '-DWITH_CUDA=OFF', '-DWITH_IPP=OFF', '-DWITH_OPENCL=OFF', '-DWITH_FFMPEG=OFF', '-DWITH_OPENEXR=OFF',  '-DBUILD_TESTS=OFF', '..']
+        args = ['-DBUILD_SHARED_LIBS=OFF', '-DWITH_CUDA=OFF', '-DWITH_IPP=OFF', '-DWITH_OPENCL=OFF', '-DWITH_FFMPEG=OFF', '-DWITH_OPENEXR=OFF',  '-DBUILD_TESTS=OFF', '-DWITH_WEBP=OFF', '..']
     }
 }
 
