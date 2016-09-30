@@ -1,48 +1,54 @@
-plugins {
-    id "com.jfrog.bintray" version "1.6"
-}
-
 import org.gradle.internal.os.OperatingSystem
 
 import java.nio.file.Files
 import java.nio.file.Paths;
 
 apply plugin: 'java'
-apply plugin: 'maven-publish'
-
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
 
 def date = new Date()
 def formattedDate = date.format('yyMMdd')
 version = "3.1.0"
+
+ext {
+    defaultCmakeArgs = [
+            '-DBUILD_SHARED_LIBS=OFF',
+            '-DWITH_CUDA=OFF',
+            '-DWITH_IPP=OFF',
+            '-DWITH_OPENCL=OFF',
+            '-DWITH_FFMPEG=OFF',
+            '-DWITH_OPENEXR=OFF',
+            '-DBUILD_TESTS=OFF',
+            '-DWITH_WEBP=OFF'
+    ]
+}
 
 def rootPath = Paths.get(projectDir.canonicalPath)
 def cmakeBuildDirectory = rootPath.resolve('build')
 def jarName = "${project.name}-${version.replace(".", "").replace("-" + formattedDate, "")}.jar"
 def pathToOpenCVJar = cmakeBuildDirectory.resolve("bin").resolve(jarName)
 
-def osName = ""
-def os_name = System.getProperty("os.name")
-def os_arch = System.getProperty("os.arch")
+def getPlatform() {
+    def platform
+    def os_name = System.getProperty("os.name")
+    def os_arch = System.getProperty("os.arch")
 
-if (os_arch == 'amd64') {
-    os_arch = 'x86_64'
-} else if (os_arch == 'i386') {
-    os_arch = 'x86'
+    if (os_arch == 'amd64') {
+        os_arch = 'x86_64'
+    } else if (os_arch == 'i386') {
+        os_arch = 'x86'
+    }
+
+    if (OperatingSystem.current().isWindows()) {
+        platform = "windows-${os_arch}"
+    } else if (OperatingSystem.current().isLinux()) {
+        platform = "linux-${os_arch}"
+    } else if (OperatingSystem.current().isMacOsX()) {
+        platform = "osx-${os_arch}"
+    } else {
+        platform = "${os_name}-${os_arch}"
+    }
+    return platform
 }
-
-if(OperatingSystem.current().isWindows()){
-    osName = "windows-${os_arch}"
-} else if(OperatingSystem.current().isLinux()){
-    osName = "linux-${os_arch}"
-} else if(OperatingSystem.current().isMacOsX()){
-    osName = "osx-${os_arch}"
-} else {
-    osName = "${os_name}-${os_arch}"
-}
-
-println "Normalized OS name: ${osName}"
 
 // Determine what repo to publish to. Default is development. Valid options are development, beta, stable, and release
 if (!hasProperty('repo')) {
@@ -51,29 +57,44 @@ if (!hasProperty('repo')) {
     }
 }
 
+if (!hasProperty('platform')) {
+    println "No 'platform' property specified; using the build system's platform"
+    ext {
+        platform = getPlatform()
+    }
+}
+
+println "Building for platform ${project.platform}"
+
 repositories {
-  mavenLocal()
-  jcenter()
-  mavenCentral()
+    mavenLocal()
+    mavenCentral()
 }
 
 task cmake(type: Exec) {
-    if(!Files.exists(cmakeBuildDirectory))
-    {
+    if (!Files.exists(cmakeBuildDirectory)) {
         Files.createDirectories(cmakeBuildDirectory)
+    }
+
+    def cmakeArgs = {
+        def toolchain = project.properties.getOrDefault('toolchain', null)
+        if (toolchain) {
+            println "Using toolchain '${toolchain}'"
+            return defaultCmakeArgs + "-DCMAKE_TOOLCHAIN_FILE=${toolchain}"
+        } else {
+            println "No toolchain specified"
+            return defaultCmakeArgs
+        }
     }
 
     workingDir cmakeBuildDirectory.toString()
 
-    if(OperatingSystem.current().isWindows())
-    {
+    if (OperatingSystem.current().isWindows()) {
         executable 'cmd'
-        args = ['/c', 'cmake', '-DBUILD_SHARED_LIBS=OFF', '-DWITH_CUDA=OFF','-DWITH_IPP=OFF', '-DWITH_OPENCL=OFF', '-DWITH_FFMPEG=OFF', '-DWITH_OPENEXR=OFF', '-DBUILD_TESTS=OFF', '-DWITH_WEBP=OFF',  '-G', '"Visual Studio 12 2013 Win64"', '..']
-    }
-    else
-    {
+        args = ['/c', 'cmake'] + cmakeArgs() + ['-G', '"Visual Studio 12 2013 Win64"', '..']
+    } else {
         executable 'cmake'
-        args = ['-DBUILD_SHARED_LIBS=OFF', '-DWITH_CUDA=OFF', '-DWITH_IPP=OFF', '-DWITH_OPENCL=OFF', '-DWITH_FFMPEG=OFF', '-DWITH_OPENEXR=OFF',  '-DBUILD_TESTS=OFF', '-DWITH_WEBP=OFF', '..']
+        args = cmakeArgs() + '..'
     }
 }
 
@@ -81,13 +102,10 @@ task make(type: Exec, dependsOn: cmake) {
     workingDir cmakeBuildDirectory.toString()
     def processors = Runtime.runtime.availableProcessors()
 
-    if(OperatingSystem.current().isWindows())
-    {
+    if (OperatingSystem.current().isWindows()) {
         executable 'cmd'
         args = ['/c', 'msbuild', '/m', 'OpenCV.sln', '/t:Build', '/p:Configuration=Release', '/v:m']
-    }
-    else
-    {
+    } else {
         executable 'make'
         args = ["-j${processors}"]
     }
@@ -98,12 +116,12 @@ task make(type: Exec, dependsOn: cmake) {
 
 task openCVJniJar(type: Jar, dependsOn: make) {
     baseName = "${project.name}-jni"
-    classifier = "${osName}"
+    classifier = "${project.platform}"
 
     manifest {
         attributes(
                 "Created-By": "WPILib Gradle Build Script",
-                "Implementation-Title": "OpenCV JNI Library, ${osName}",
+                "Implementation-Title": "OpenCV JNI Library, ${project.platform}",
                 "Implementation-Version": project.version,
                 "Implementation-Vendor": "Itseez",
 
@@ -113,26 +131,25 @@ task openCVJniJar(type: Jar, dependsOn: make) {
                 "Bundle-Vendor": "WPILib")
     }
 
-    if(!OperatingSystem.current().isWindows()){
-      from(cmakeBuildDirectory.resolve("lib").toFile()) {
-          include '*java*.so'
-          include '*java*.dylib'
-      }
-    }
-    else {
-      from(cmakeBuildDirectory.resolve("bin").resolve("Release").toFile()) {
-          include '*java*.dll'
-      }
+    if (!OperatingSystem.current().isWindows()) {
+        from(cmakeBuildDirectory.resolve("lib").toFile()) {
+            include '*java*.so'
+            include '*java*.dylib'
+        }
+    } else {
+        from(cmakeBuildDirectory.resolve("bin").resolve("Release").toFile()) {
+            include '*java*.dll'
+        }
     }
 }
 
 task openCVNativeLibJar(type: Jar, dependsOn: make) {
     baseName = "${project.name}-natives"
-    classifier = "${osName}"
+    classifier = "${project.platform}"
     manifest {
         attributes(
                 "Created-By": "WPILib Gradle Build Script",
-                "Implementation-Title": "OpenCV Native Libraries, ${osName}",
+                "Implementation-Title": "OpenCV Native Libraries, ${project.platform}",
                 "Implementation-Version": project.version,
                 "Implementation-Vendor": "Itseez",
 
@@ -142,19 +159,18 @@ task openCVNativeLibJar(type: Jar, dependsOn: make) {
                 "Bundle-Vendor": "WPILib")
     }
 
-    if(!OperatingSystem.current().isWindows()){
-      from(cmakeBuildDirectory.resolve("lib").toFile()) {
-          exclude '*java*.so'
-          exclude '*java*.dylib'
-          exclude '**/*dephelp*'
-      }
-    }
-    else {
-      from(cmakeBuildDirectory.resolve("lib").resolve("Release").toFile()) {
-          include '*.lib' // static lib
-          include '*.dll' // dynamic lib
-          exclude '*java*'
-      }
+    if (!OperatingSystem.current().isWindows()) {
+        from(cmakeBuildDirectory.resolve("lib").toFile()) {
+            exclude '*java*.so'
+            exclude '*java*.dylib'
+            exclude '**/*dephelp*'
+        }
+    } else {
+        from(cmakeBuildDirectory.resolve("lib").resolve("Release").toFile()) {
+            include '*.lib' // static lib
+            include '*.dll' // dynamic lib
+            exclude '*java*'
+        }
     }
 }
 
@@ -225,6 +241,7 @@ task allArtifacts(type: GradleBuild) {
     tasks = ['openCVJar', 'openCVSourceJar', 'openCVJniJar', 'openCVNativeLibJar', 'openCVHeadersJar']
 }
 
+apply plugin: 'maven-publish'
 publishing {
     publications {
         java(MavenPublication) {
