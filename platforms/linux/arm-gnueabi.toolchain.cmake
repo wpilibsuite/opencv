@@ -2,7 +2,7 @@ set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
-set(GCC_COMPILER_VERSION "4.9.3" CACHE STRING "GCC Compiler version")
+set(GCC_COMPILER_VERSION "4.9" CACHE STRING "GCC Compiler version")
 
 set(FLOAT_ABI_SUFFIX "")
 if (NOT SOFTFP)
@@ -11,6 +11,13 @@ endif()
 
 find_program(CMAKE_C_COMPILER NAMES arm-frc-linux-gnueabi${FLOAT_ABI_SUFFIX}-gcc-${GCC_COMPILER_VERSION})
 find_program(CMAKE_CXX_COMPILER NAMES arm-frc-linux-gnueabi${FLOAT_ABI_SUFFIX}-g++-${GCC_COMPILER_VERSION})
+find_program(CMAKE_AR NAMES arm-frc-linux-gnueabi${FLOAT_ABI_SUFFIX}-ar)
+find_program(CMAKE_LINKER NAMES arm-frc-linux-gnueabi${FLOAT_ABI_SUFFIX}-ld)
+find_program(CMAKE_NM NAMES arm-frc-linux-gnueabi${FLOAT_ABI_SUFFIX}-nm)
+find_program(CMAKE_OBJCOPY NAMES arm-frc-linux-gnueabi${FLOAT_ABI_SUFFIX}-objcopy)
+find_program(CMAKE_OBJDUMP NAMES arm-frc-linux-gnueabi${FLOAT_ABI_SUFFIX}-objdump)
+find_program(CMAKE_RANLIB NAMES arm-frc-linux-gnueabi${FLOAT_ABI_SUFFIX}-ranlib)
+
 set(ARM_LINUX_SYSROOT /usr/arm-frc-linux-gnueabi${FLOAT_ABI_SUFFIX} CACHE PATH "ARM cross compilation system root")
 
 set(CMAKE_CXX_FLAGS           ""                    CACHE STRING "c++ flags")
