@@ -563,7 +563,12 @@ include(cmake/OpenCVDetectPython.cmake)
 
 # --- Java Support ---
 include(cmake/OpenCVDetectApacheAnt.cmake)
-if(ANDROID)
+if(ROBORIO)
+  set(JAVA_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/platforms/linux/arm-linux)
+  set(JAVA_INCLUDE_PATH2 ${CMAKE_CURRENT_SOURCE_DIR}/platforms/linux/arm-linux/linux)
+  set(JNI_INCLUDE_DIRS ${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
+  set(JNI_FOUND TRUE)
+elseif(ANDROID)
   include(cmake/OpenCVDetectAndroidSDK.cmake)
 
   if(NOT ANDROID_TOOLS_Pkg_Revision GREATER 13)
