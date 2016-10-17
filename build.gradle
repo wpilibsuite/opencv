@@ -78,6 +78,16 @@ task cmake(type: Exec) {
 
     def cmakeArgs = {
         def toolchain = project.properties.getOrDefault('toolchain', null)
+        if (project.platform == "linux-arm") {
+            toolchain = "platforms/linux/arm-gnueabi.toolchain.cmake"
+            println "Using toolchain '${toolchain}'"
+            return defaultCmakeArgs + "-DCMAKE_TOOLCHAIN_FILE=${toolchain}" +
+                '-DBUILD_SHARED_LIBS=ON' +
+                '-DROBORIO=ON' +
+                '-DENABLE_NEON=ON' +
+                '-DENABLE_VFPV3=ON' +
+                '-DSOFTFP=ON'
+        }
         if (toolchain) {
             println "Using toolchain '${toolchain}'"
             return defaultCmakeArgs + "-DCMAKE_TOOLCHAIN_FILE=${toolchain}"
