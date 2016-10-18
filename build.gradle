@@ -83,7 +83,6 @@ task cmake(type: Exec) {
             println "Using toolchain '${toolchain}'"
             return defaultCmakeArgs + "-DCMAKE_TOOLCHAIN_FILE=${toolchain}" +
                 '-DBUILD_SHARED_LIBS=ON' +
-                '-DROBORIO=ON' +
                 '-DENABLE_NEON=ON' +
                 '-DENABLE_VFPV3=ON' +
                 '-DSOFTFP=ON'
