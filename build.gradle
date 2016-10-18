@@ -17,6 +17,8 @@ ext {
             '-DWITH_OPENCL=OFF',
             '-DWITH_FFMPEG=OFF',
             '-DWITH_OPENEXR=OFF',
+            '-DWITH_GSTREAMER=OFF',
+            '-DWITH_GTK=OFF',
             '-DBUILD_TESTS=OFF',
             '-DWITH_WEBP=OFF'
     ]
