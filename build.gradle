@@ -245,7 +245,11 @@ task openCVHeadersJar(type: Jar, dependsOn: make) {
         include '*/include/**/*.h'
         exclude 'java/**'
         exclude 'python/**'
+        eachFile { FileCopyDetails fcp ->
+            fcp.relativePath = new RelativePath(!fcp.file.isDirectory(), fcp.relativePath.segments[2..-1] as String[])
+        }
     }
+    includeEmptyDirs = false
 }
 
 task allArtifacts(type: GradleBuild) {
