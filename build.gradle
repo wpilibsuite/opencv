@@ -20,6 +20,10 @@ ext {
             '-DWITH_GSTREAMER=OFF',
             '-DWITH_GTK=OFF',
             '-DWITH_1394=OFF',
+            '-DWITH_JASPER=OFF',
+            '-DWITH_TIFF=OFF',
+            '-DBUILD_JPEG=ON',
+            '-DBUILD_PNG=ON',
             '-DBUILD_TESTS=OFF',
             '-DWITH_WEBP=OFF'
     ]
@@ -184,6 +188,7 @@ task openCVNativeLibJar(type: Jar, dependsOn: make) {
             exclude '*java*'
         }
     }
+    from(cmakeBuildDirectory.resolve("3rdparty").resolve("lib").toFile())
 }
 
 task openCVJar(type: Jar, dependsOn: make) {
