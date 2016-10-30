@@ -57,6 +57,26 @@ def getPlatform() {
     return platform
 }
 
+def getOutputFormat(platform) {
+    if (platform == "linux-arm") {
+        return "elf32-littlearm"
+    } else if (platform == "linux-x86") {
+        return "elf32-i386"
+    } else if (platform == "linux-x86_64") {
+        return "elf64-x86-64"
+    } else if (platform == "osx-x86") {
+        return ""
+    } else if (platform == "osx-x86_64") {
+        return ""
+    } else if (platform == "windows-x86") {
+        return "pe-i386"
+    } else if (platform == "windows-x86_64") {
+        return "pe-x86-64"
+    } else {
+        return ""
+    }
+}
+
 // Determine what repo to publish to. Default is development. Valid options are development, beta, stable, and release
 if (!hasProperty('repo')) {
     allprojects {
@@ -130,6 +150,24 @@ task make(type: Exec, dependsOn: cmake) {
     outputs.file cmakeBuildDirectory.resolve("src").toFile()
 }
 
+task nativeLibLinks(type: Exec, dependsOn: make) {
+    workingDir cmakeBuildDirectory.resolve("lib").toString()
+
+    if (OperatingSystem.current().isWindows()) {
+        executable 'cmd'
+        args = ['/c', "$rootPath/platforms/linux/genlinks.bat", getOutputFormat(project.platform)]
+    } else {
+        executable "$rootPath/platforms/linux/genlinks"
+        args = [getOutputFormat(project.platform)]
+    }
+
+    doLast {
+        def outputFormat = getOutputFormat(project.platform)
+        def soFile = file("$cmakeBuildDirectory/lib/libopencv.so")
+        soFile.write "OUTPUT_FORMAT($outputFormat)\nGROUP ( AS_NEEDED ( -lopencv_calib3d -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_imgcodecs -lopencv_imgproc -lopencv_ml -lopencv_objdetect -lopencv_photo -lopencv_shape -lopencv_stitching -lopencv_superres -lopencv_videoio -lopencv_video -lopencv_videostab -lopencv_core -llibjpeg -llibpng ) )\n"
+    }
+}
+
 task openCVJniJar(type: Jar, dependsOn: make) {
     baseName = "${project.name}-jni"
     classifier = "${project.platform}"
@@ -159,7 +197,7 @@ task openCVJniJar(type: Jar, dependsOn: make) {
     }
 }
 
-task openCVNativeLibJar(type: Jar, dependsOn: make) {
+task openCVNativeLibJar(type: Jar, dependsOn: nativeLibLinks) {
     baseName = "${project.name}-natives"
     classifier = "${project.platform}"
     manifest {
