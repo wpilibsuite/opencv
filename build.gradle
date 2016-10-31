@@ -25,14 +25,10 @@ ext {
             '-DBUILD_JPEG=ON',
             '-DBUILD_PNG=ON',
             '-DBUILD_TESTS=OFF',
+            '-DPython_ADDITIONAL_VERSIONS=3.5',
             '-DWITH_WEBP=OFF'
     ]
 }
-
-def rootPath = Paths.get(projectDir.canonicalPath)
-def cmakeBuildDirectory = rootPath.resolve('build')
-def jarName = "${project.name}-${version.replace(".", "").replace("-" + formattedDate, "")}.jar"
-def pathToOpenCVJar = cmakeBuildDirectory.resolve("bin").resolve(jarName)
 
 def getPlatform() {
     def platform
@@ -91,7 +87,33 @@ if (!hasProperty('platform')) {
     }
 }
 
+if (!hasProperty('cmakePath')) {
+    ext {
+        cmakePath = "cmake"
+    }
+}
+
 println "Building for platform ${project.platform}"
+
+def rootPath = Paths.get(projectDir.canonicalPath)
+def cmakeBuildDirectory = rootPath.resolve('build').resolve(project.platform)
+def jarName = "${project.name}-${version.replace(".", "").replace("-" + formattedDate, "")}.jar"
+def pathToOpenCVJar = cmakeBuildDirectory.resolve("bin").resolve(jarName)
+
+if (project.platform.startsWith('windows')) {
+    def gen = "Visual Studio 12 2013"
+    if (hasProperty('vsversion')) {
+        if (project.vsversion == "2015") {
+            gen = "Visual Studio 14 2015"
+        }
+    }
+    if (project.platform == "windows-x86_64") {
+        gen += " Win64"
+    }
+    ext {
+        cmakeGenerator = gen
+    }
+}
 
 repositories {
     mavenLocal()
@@ -104,7 +126,10 @@ task cmake(type: Exec) {
     }
 
     def cmakeArgs = {
-        def toolchain = project.properties.getOrDefault('toolchain', null)
+        def toolchain = null
+        if (hasProperty('toolchain')) {
+            toolchain = project.toolchain
+        }
         if (project.platform == "linux-arm") {
             toolchain = "platforms/linux/arm-gnueabi.toolchain.cmake"
             println "Using toolchain '${toolchain}'"
@@ -125,12 +150,12 @@ task cmake(type: Exec) {
 
     workingDir cmakeBuildDirectory.toString()
 
-    if (OperatingSystem.current().isWindows()) {
-        executable 'cmd'
-        args = ['/c', 'cmake'] + cmakeArgs() + ['-G', '"Visual Studio 12 2013 Win64"', '..']
+    if (project.platform.startsWith("windows")) {
+        executable project.cmakePath
+        args = cmakeArgs() + ['-G', '"' + project.cmakeGenerator + '"', rootPath]
     } else {
-        executable 'cmake'
-        args = cmakeArgs() + '..'
+        executable project.cmakePath
+        args = cmakeArgs() + [rootPath]
     }
 }
 
@@ -138,7 +163,7 @@ task make(type: Exec, dependsOn: cmake) {
     workingDir cmakeBuildDirectory.toString()
     def processors = Runtime.runtime.availableProcessors()
 
-    if (OperatingSystem.current().isWindows()) {
+    if (project.platform.startsWith("windows")) {
         executable 'cmd'
         args = ['/c', 'msbuild', '/m', 'OpenCV.sln', '/t:Build', '/p:Configuration=Release', '/v:m']
     } else {
@@ -150,21 +175,29 @@ task make(type: Exec, dependsOn: cmake) {
     outputs.file cmakeBuildDirectory.resolve("src").toFile()
 }
 
-task nativeLibLinks(type: Exec, dependsOn: make) {
-    workingDir cmakeBuildDirectory.resolve("lib").toString()
-
-    if (OperatingSystem.current().isWindows()) {
-        executable 'cmd'
-        args = ['/c', "$rootPath/platforms/linux/genlinks.bat", getOutputFormat(project.platform)]
-    } else {
-        executable "$rootPath/platforms/linux/genlinks"
-        args = [getOutputFormat(project.platform)]
+if (project.platform.startsWith('windows')) {
+    task nativeLibLinks(type: Exec, dependsOn: make) {
+        workingDir cmakeBuildDirectory.resolve("lib").resolve("Release").toString()
+        executable 'lib'
+        args = ['/OUT:opencv.lib', "opencv_calib3d310.lib", "opencv_features2d310.lib", "opencv_flann310.lib", "opencv_highgui310.lib", "opencv_imgcodecs310.lib", "opencv_imgproc310.lib", "opencv_ml310.lib", "opencv_objdetect310.lib", "opencv_photo310.lib", "opencv_shape310.lib", "opencv_stitching310.lib", "opencv_superres310.lib", "opencv_videoio310.lib", "opencv_video310.lib", "opencv_videostab310.lib", "opencv_core310.lib", "../../3rdparty/lib/Release/libjpeg.lib", "../../3rdparty/lib/Release/libpng.lib", "../../3rdparty/lib/Release/zlib.lib"]
     }
+} else {
+    task nativeLibLinks(type: Exec, dependsOn: make) {
+        workingDir cmakeBuildDirectory.resolve("lib").toString()
 
-    doLast {
-        def outputFormat = getOutputFormat(project.platform)
-        def soFile = file("$cmakeBuildDirectory/lib/libopencv.so")
-        soFile.write "OUTPUT_FORMAT($outputFormat)\nGROUP ( AS_NEEDED ( -lopencv_calib3d -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_imgcodecs -lopencv_imgproc -lopencv_ml -lopencv_objdetect -lopencv_photo -lopencv_shape -lopencv_stitching -lopencv_superres -lopencv_videoio -lopencv_video -lopencv_videostab -lopencv_core -llibjpeg -llibpng ) )\n"
+        if (OperatingSystem.current().isWindows()) {
+            executable 'cmd'
+            args = ['/c', "$rootPath/platforms/linux/genlinks.bat", getOutputFormat(project.platform)]
+        } else {
+            executable "$rootPath/platforms/linux/genlinks"
+            args = [getOutputFormat(project.platform)]
+        }
+
+        doLast {
+            def outputFormat = getOutputFormat(project.platform)
+            def soFile = file("$cmakeBuildDirectory/lib/libopencv.so")
+            soFile.write "OUTPUT_FORMAT($outputFormat)\nGROUP ( AS_NEEDED ( -lopencv_calib3d -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_imgcodecs -lopencv_imgproc -lopencv_ml -lopencv_objdetect -lopencv_photo -lopencv_shape -lopencv_stitching -lopencv_superres -lopencv_videoio -lopencv_video -lopencv_videostab -lopencv_core -llibjpeg -llibpng ) )\n"
+        }
     }
 }
 
@@ -185,7 +218,7 @@ task openCVJniJar(type: Jar, dependsOn: make) {
                 "Bundle-Vendor": "WPILib")
     }
 
-    if (!OperatingSystem.current().isWindows()) {
+    if (!project.platform.startsWith("windows")) {
         from(cmakeBuildDirectory.resolve("lib").toFile()) {
             include '*java*.so'
             include '*java*.dylib'
@@ -213,7 +246,7 @@ task openCVNativeLibJar(type: Jar, dependsOn: nativeLibLinks) {
                 "Bundle-Vendor": "WPILib")
     }
 
-    if (!OperatingSystem.current().isWindows()) {
+    if (!project.platform.startsWith("windows")) {
         from(cmakeBuildDirectory.resolve("lib").toFile()) {
             exclude '*java*.so'
             exclude '*java*.dylib'
@@ -221,7 +254,7 @@ task openCVNativeLibJar(type: Jar, dependsOn: nativeLibLinks) {
         }
     } else {
         from(cmakeBuildDirectory.resolve("lib").resolve("Release").toFile()) {
-            include '*.lib' // static lib
+            include 'opencv.lib' // static lib
             include '*.dll' // dynamic lib
             exclude '*java*'
         }
