@@ -178,8 +178,8 @@ task make(type: Exec, dependsOn: cmake) {
 if (project.platform.startsWith('windows')) {
     task nativeLibLinks(type: Exec, dependsOn: make) {
         workingDir cmakeBuildDirectory.resolve("lib").resolve("Release").toString()
-        executable 'lib'
-        args = ['/OUT:opencv.lib', "opencv_calib3d310.lib", "opencv_features2d310.lib", "opencv_flann310.lib", "opencv_highgui310.lib", "opencv_imgcodecs310.lib", "opencv_imgproc310.lib", "opencv_ml310.lib", "opencv_objdetect310.lib", "opencv_photo310.lib", "opencv_shape310.lib", "opencv_stitching310.lib", "opencv_superres310.lib", "opencv_videoio310.lib", "opencv_video310.lib", "opencv_videostab310.lib", "opencv_core310.lib", "../../3rdparty/lib/Release/libjpeg.lib", "../../3rdparty/lib/Release/libpng.lib", "../../3rdparty/lib/Release/zlib.lib"]
+        executable 'cmd'
+        args = ['/c', 'lib', '/OUT:opencv.lib', "opencv_calib3d310.lib", "opencv_features2d310.lib", "opencv_flann310.lib", "opencv_highgui310.lib", "opencv_imgcodecs310.lib", "opencv_imgproc310.lib", "opencv_ml310.lib", "opencv_objdetect310.lib", "opencv_photo310.lib", "opencv_shape310.lib", "opencv_stitching310.lib", "opencv_superres310.lib", "opencv_videoio310.lib", "opencv_video310.lib", "opencv_videostab310.lib", "opencv_core310.lib", "..\\..\\3rdparty\\lib\\Release\\libjpeg.lib", "../..\\3rdparty\\lib\\Release\\libpng.lib", "..\\..\\3rdparty\\lib\\Release\\zlib.lib"]
     }
 } else {
     task nativeLibLinks(type: Exec, dependsOn: make) {
