@@ -2,6 +2,8 @@
 
 # this file should generate symlinks (POSIX, TODO) or LD scripts (POSIX or windows) to enable standard version linking
 
+shopt -s nullglob
+
 for lib in lib*.so.*; do
 	libout="${lib%.*}"
 	rm -rf $libout
