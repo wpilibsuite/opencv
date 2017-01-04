@@ -55,7 +55,9 @@ def getPlatform() {
 }
 
 def getOutputFormat(platform) {
-    if (platform == "linux-arm") {
+    if (platform == "linux-armhf") {
+        return "elf32-littlearm"
+    } else if (platform == "linux-arm") {
         return "elf32-littlearm"
     } else if (platform == "linux-x86") {
         return "elf32-i386"
@@ -131,6 +133,13 @@ task cmake(type: Exec) {
         if (hasProperty('toolchain')) {
             toolchain = project.toolchain
         }
+        if (project.platform == "linux-arm"  && project.hasProperty("armSuffix")) {
+            toolchain = "platforms/linux/arm-gnueabihf.toolchain.cmake"
+            println "Using toolchain '${toolchain}'"
+            return defaultCmakeArgs + "-DCMAKE_TOOLCHAIN_FILE=${toolchain}" +
+                '-DENABLE_NEON=ON' +
+                '-DENABLE_VFPV3=ON'
+        }
         if (project.platform == "linux-arm") {
             toolchain = "platforms/linux/arm-gnueabi.toolchain.cmake"
             println "Using toolchain '${toolchain}'"
@@ -140,6 +149,7 @@ task cmake(type: Exec) {
                 '-DENABLE_VFPV3=ON' +
                 '-DSOFTFP=ON'
         }
+
         if (toolchain) {
             println "Using toolchain '${toolchain}'"
             return defaultCmakeArgs + "-DCMAKE_TOOLCHAIN_FILE=${toolchain}"
@@ -204,12 +214,19 @@ if (project.platform.startsWith('windows')) {
 
 task openCVJniJar(type: Jar, dependsOn: make) {
     baseName = "${project.name}-jni"
-    classifier = "${project.platform}"
+    def platformName
+    if (project.platform =="linux-arm" && project.hasProperty("armSuffix")) {
+        platformName = "${project.platform}${project.armSuffix}"
+        classifier = platformName
+    } else {
+        platformName = "${project.platform}"
+        classifier = platformName
+    }
 
     manifest {
         attributes(
                 "Created-By": "WPILib Gradle Build Script",
-                "Implementation-Title": "OpenCV JNI Library, ${project.platform}",
+                "Implementation-Title": "OpenCV JNI Library, ${platformName}",
                 "Implementation-Version": project.version,
                 "Implementation-Vendor": "Itseez",
 
@@ -233,11 +250,18 @@ task openCVJniJar(type: Jar, dependsOn: make) {
 
 task openCVNativeLibJar(type: Jar, dependsOn: nativeLibLinks) {
     baseName = "${project.name}-natives"
-    classifier = "${project.platform}"
+    def platformName
+    if (project.platform =="linux-arm" && project.hasProperty("armSuffix")) {
+        platformName = "${project.platform}${project.armSuffix}"
+        classifier = platformName
+    } else {
+        platformName = "${project.platform}"
+        classifier = platformName
+    }
     manifest {
         attributes(
                 "Created-By": "WPILib Gradle Build Script",
-                "Implementation-Title": "OpenCV Native Libraries, ${project.platform}",
+                "Implementation-Title": "OpenCV Native Libraries, ${platformName}",
                 "Implementation-Version": project.version,
                 "Implementation-Vendor": "Itseez",
 

@@ -6,7 +6,10 @@
 
 `gradlew -Pplatform=linux-arm` will generate a RoboRIO target image.
 Additionally, `-Ptoolchain=xxx` can be used to override `CMAKE_TOOLCHAIN_FILE`
-for different compilers.
+for different compilers. Additionally, `-ParmSuffix=xxx` will override `CMAKE_TOOLCHAIN_FILE`
+to use a standard armhf cross compiler, and will add whatever the suffix is to the output package.
+The default toolchain file is written with the latest linaro 4.9 compiler
+(https://releases.linaro.org/components/toolchain/binaries/4.9-2016.02/arm-linux-gnueabihf/).
 
 Building for RoboRIO requires a Unix-type environment with JDK, cmake, ant,
 python, and frc-toolchain installed
