@@ -512,7 +512,7 @@ if(WIN32)
 else()
   # Postfix of so's:
   set(OPENCV_DLLVERSION "")
-  set(OPENCV_DEBUG_POSTFIX "")
+  set(OPENCV_DEBUG_POSTFIX d)
 endif()
 
 if(DEFINED CMAKE_DEBUG_POSTFIX)
