@@ -11,7 +11,7 @@
     <!-- This is to make a jar with a source attachment, for e.g. easy -->
     <!-- navigation in Eclipse. See this question: -->
     <!-- http://stackoverflow.com/questions/3584968/ant-how-to-compile-jar-that-includes-source-attachment -->
-    <javac sourcepath="" srcdir="java" destdir="build/classes" debug="on" includeantruntime="false" >
+    <javac target="1.8" source="1.8" sourcepath="" srcdir="java" destdir="build/classes" debug="on" includeantruntime="false" >
       <include name="**/*.java"/>
       <compilerarg line="-encoding utf-8"/>
     </javac>
