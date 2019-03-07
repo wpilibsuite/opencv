@@ -1043,7 +1043,6 @@ next_marker (j_decompress_ptr cinfo)
   }
 
   if (cinfo->marker->discarded_bytes != 0) {
-    WARNMS2(cinfo, JWRN_EXTRANEOUS_DATA, cinfo->marker->discarded_bytes, c);
     cinfo->marker->discarded_bytes = 0;
   }
 
