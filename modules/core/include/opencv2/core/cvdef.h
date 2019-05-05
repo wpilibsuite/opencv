@@ -600,10 +600,7 @@ Cv64suf;
 
 
 
-// Integer types portatibility
-#ifdef OPENCV_STDINT_HEADER
-#include OPENCV_STDINT_HEADER
-#elif defined(__cplusplus)
+#if defined(__cplusplus)
 #if defined(_MSC_VER) && _MSC_VER < 1600 /* MSVS 2010 */
 namespace cv {
 typedef signed char int8_t;
